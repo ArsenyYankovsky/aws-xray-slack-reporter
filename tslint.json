@@ -1,0 +1,26 @@
+{
+  "extends": [
+    "tslint:recommended",
+    "tslint-config-airbnb"
+  ],
+  "linterOptions": {
+    "exclude": [
+      "config//*.js",
+      "node_modules//*.ts"
+    ]
+  },
+  "rules": {
+    "semicolon": [
+      true,
+      "never"
+    ],
+    "max-line-length": false,
+    "no-console": false,
+    "jsx-no-lambda": false,
+    "import-name": false,
+    "variable-name": false,
+    "jsx-boolean-value": false,
+    "align": false,
+    "object-literal-sort-keys": false
+  }
+}
