@@ -5,19 +5,6 @@ import { chain, compact, flatMap, flatten, get, map } from 'lodash'
 
 const region = process.env.AWS_REGION
 
-const printStackTrace = (exception) => {
-  return map(
-    exception.stack,
-    traceElement => `   at ${traceElement.label} (${traceElement.path}:${traceElement.line})`,
-  ).join('\n')
-}
-
-const generateExceptionMessage = (exceptionData) => {
-  return `Exception occured in *${exceptionData.document.name}*\`\`\`
-${exceptionData.exception.message}
-${printStackTrace(exceptionData.exception)} \`\`\``
-}
-
 const getTraceIds = async (xray: XRay, timePeriod) => {
   const params: GetTraceSummariesRequest = {
     EndTime: new Date(),
@@ -38,34 +25,6 @@ const getTraceIds = async (xray: XRay, timePeriod) => {
 
     params.NextToken = response.NextToken
   }
-}
-
-const sendMessages = async (exceptionDatas) => {
-  const web = new WebClient(process.env.SLACK_TOKEN)
-
-  const ts = Number(new Date())
-
-  await Promise.all(exceptionDatas.map((exceptionData) => {
-    return web.chat.postMessage({
-      ts,
-      icon_emoji: ':fish:',
-      channel: process.env.SLACK_CHANNEL as string,
-      text: generateExceptionMessage(exceptionData),
-      as_user: false,
-      attachments: [
-        {
-          fallback: `Check trace at https://${region}.console.aws.amazon.com/xray/home?region=${region}#/traces/${exceptionData.trace.Id}`,
-          actions: [
-            {
-              type: 'button',
-              text: 'View Trace',
-              url: `https://${region}.console.aws.amazon.com/xray/home?region=${region}#/traces/${exceptionData.trace.Id}`,
-            },
-          ],
-        },
-      ],
-    })
-  }))
 }
 
 const getTraces = async () => {
@@ -104,6 +63,47 @@ const extractExceptions = traces =>
     }))
     .compact()
     .value()
+
+const printStackTrace = (exception) => {
+  return map(
+    exception.stack,
+    traceElement => `   at ${traceElement.label} (${traceElement.path}:${traceElement.line})`,
+  ).join('\n')
+}
+
+const generateExceptionMessage = (exceptionData) => {
+  return `Exception occured in *${exceptionData.document.name}*\`\`\`
+${exceptionData.exception.message}
+${printStackTrace(exceptionData.exception)} \`\`\``
+}
+
+const sendMessages = async (exceptionDatas) => {
+  const web = new WebClient(process.env.SLACK_TOKEN)
+
+  const ts = Number(new Date())
+
+  await Promise.all(exceptionDatas.map((exceptionData) => {
+    return web.chat.postMessage({
+      ts,
+      icon_emoji: ':fish:',
+      channel: process.env.SLACK_CHANNEL as string,
+      text: generateExceptionMessage(exceptionData),
+      as_user: false,
+      attachments: [
+        {
+          fallback: `Check trace at https://${region}.console.aws.amazon.com/xray/home?region=${region}#/traces/${exceptionData.trace.Id}`,
+          actions: [
+            {
+              type: 'button',
+              text: 'View Trace',
+              url: `https://${region}.console.aws.amazon.com/xray/home?region=${region}#/traces/${exceptionData.trace.Id}`,
+            },
+          ],
+        },
+      ],
+    })
+  }))
+}
 
 export const reportExceptions = async () => {
   try {
