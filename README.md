@@ -13,7 +13,7 @@ Simple AWS lambda that runs every 5 minutes and reports all AWS X-Ray exceptions
 npm install -g serverless
 ```
 
-# Known limitations
+# Limitations
 
 1) The lambda will only report exceptions from AWS X-Ray in the same AWS region it is deployed.
 2) It will also only report exceptions that are reported in a segment. It will not report exceptions from subsegments. To do that you'll need to modify the `extractExceptions` function to recursively traverse segments tree.
